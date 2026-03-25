@@ -50,20 +50,25 @@ export async function GET(req: Request) {
         fileName = "kit-asas.pdf";
     }
 
-    // 4. Generate Signed URL (Link rahsia yang akan 'mati' dalam 60 saat)
-    // Pastikan nama bucket kau 'ebooks' dan Private
-    const { data: storageData, error: storageError } = await supabase
-      .storage
-      .from("ebooks")
-      .createSignedUrl(fileName, 60);
+ // --- KOD BARU UNTUK TENGOK ERROR SEBENAR ---
+const { data: storageData, error: storageError } = await supabase
+.storage
+.from("ebooks")
+.createSignedUrl(fileName, 60);
 
-    if (storageError || !storageData) {
-      console.error("Storage Error:", storageError.message);
-      return NextResponse.json(
-        { error: "Gagal menjana pautan muat turun." },
-        { status: 500 }
-      );
-    }
+if (storageError || !storageData) {
+// Log ni akan keluar kat terminal Cursor awak
+console.error("DEBUG STORAGE ERROR:", storageError); 
+console.log("CUBA DOWNLOAD FAIL:", fileName);
+
+return NextResponse.json(
+  { 
+    error: "Gagal menjana pautan muat turun.",
+    punca: storageError?.message || "Fail tak dijumpai dalam bucket" 
+  }, 
+  { status: 500 }
+);
+}
 
     // 5. Redirect terus ke link PDF/Zip tersebut
     // User takkan nampak link asal Supabase, cuma nampak file terus download
