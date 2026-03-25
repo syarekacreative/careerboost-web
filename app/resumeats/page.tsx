@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { motion, AnimatePresence } from "framer-motion"
+import Script from "next/script" // Import Next.js Script component
 import {
   Menu,
   X,
@@ -27,12 +28,12 @@ import {
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 
-// --- DATA ASAL (STRICTLY MAINTAINED) ---
+// --- DATA ASAL ---
 const painPoints = [
   {
     icon: FileX,
     title: "Format Tidak Mesra ATS",
-    description: "Resume anda mungkin hebat di mata manusia, tetapi sistem ATS (Applicant Tracking System) tidak dapat membacanya dengan betul.",
+    description: "Resume anda mungkin hebat di mata manusia, tetapi sistem ATS tidak dapat membacanya dengan betul.",
   },
   {
     icon: MessageSquareOff,
@@ -51,6 +52,7 @@ const tiers = [
     name: "Pakej Basic",
     price: "RM23",
     description: "Untuk permulaan yang kukuh",
+    formUrl: "https://syarekacreative.bcl.my/embed/form/careerboost-basic", // Pastikan URL ni betul
     features: [
       "Modul Resume Mesra ATS",
       "Template Resume/CV Google Docs",
@@ -64,6 +66,7 @@ const tiers = [
     name: "Career Boost Bundle",
     price: "RM33",
     description: "Pakej lengkap untuk kejayaan",
+    formUrl: "https://syarekacreative.bcl.my/embed/form/careerboost", // URL Bundle
     features: [
       "Semua dalam Pakej Basic",
       "Workbook Tulis Data Resume Guna AI",
@@ -109,8 +112,7 @@ export default function CareerBoostLandingPage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [showCheckout, setShowCheckout] = useState(false)
-  const [selectedPackage, setSelectedPackage] = useState("")
-  const [isSubmitting, setIsSubmitting] = useState(false) // State baru untuk loading
+  const [selectedPackage, setSelectedPackage] = useState<any>(null)
 
   useEffect(() => {
     const handleScroll = () => setIsScrolled(window.scrollY > 10)
@@ -118,49 +120,9 @@ export default function CareerBoostLandingPage() {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  const openCheckout = (pkg: string) => {
+  const openCheckout = (pkg: any) => {
     setSelectedPackage(pkg)
     setShowCheckout(true)
-  }
-
-  // --- FUNGSI PEMBAYARAN BILLPLZ ---
-  const handleCheckout = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault()
-    setIsSubmitting(true)
-
-    const formData = new FormData(e.currentTarget)
-    const name = formData.get("name")
-    const email = formData.get("email")
-
-    // Tentukan harga ikut pakej (RM)
-    const amount = selectedPackage === "Career Boost Bundle" ? 33 : 23
-
-    try {
-      const response = await fetch("/api/pay", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          name,
-          email,
-          amount,
-          packageName: selectedPackage,
-        }),
-      })
-
-      const data = await response.json()
-
-      if (data.url) {
-        // Redirect ke Billplz
-        window.location.href = data.url
-      } else {
-        alert("Gagal menjana pautan pembayaran. Sila cuba sebentar lagi.")
-        setIsSubmitting(false)
-      }
-    } catch (error) {
-      console.error("Payment error:", error)
-      alert("Ralat sistem. Sila pastikan sambungan internet anda stabil.")
-      setIsSubmitting(false)
-    }
   }
 
   return (
@@ -182,7 +144,7 @@ export default function CareerBoostLandingPage() {
             </a>
             <div className="hidden md:block">
               <Button 
-                onClick={() => openCheckout("Career Boost Bundle")} 
+                onClick={() => openCheckout(tiers[1])} 
                 className="bg-[#D4AF37] hover:bg-[#B8962E] text-[#001f3f] font-semibold px-6 py-2 rounded-lg transition-all"
               >
                 Beli Sekarang
@@ -214,7 +176,7 @@ export default function CareerBoostLandingPage() {
                 Gunakan panduan praktikal yang dibina berdasarkan kriteria sebenar recruiter di Malaysia.
               </p>
               <div className="mt-8 flex flex-col sm:flex-row gap-4 justify-center lg:justify-start">
-                <Button onClick={() => openCheckout("Career Boost Bundle")} size="lg" className="bg-[#D4AF37] hover:bg-[#B8962E] text-[#001f3f] font-semibold text-lg px-8 py-6 rounded-xl shadow-lg group">
+                <Button onClick={() => openCheckout(tiers[1])} size="lg" className="bg-[#D4AF37] hover:bg-[#B8962E] text-[#001f3f] font-semibold text-lg px-8 py-6 rounded-xl shadow-lg group">
                   Lihat Pakej Career Boost <ArrowRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform" />
                 </Button>
               </div>
@@ -304,20 +266,6 @@ export default function CareerBoostLandingPage() {
         </div>
       </section>
 
-      {/* 4. PREVIEW SECTION */}
-      <section className="py-20 md:py-28 bg-white">
-        <div className="max-w-7xl mx-auto px-4 grid md:grid-cols-2 gap-16 items-center">
-           <motion.div initial={{ opacity: 0, x: -20 }} whileInView={{ opacity: 1, x: 0 }} viewport={{ once: true }}>
-              <h2 className="text-3xl md:text-4xl font-bold text-[#001f3f] mb-6">Intai Apa Ada Di Dalam.</h2>
-              <p className="text-gray-600 mb-8 text-lg">Bukan sekadar teks, tapi panduan visual langkah-demi-langkah.</p>
-              <div className="flex items-center gap-3 font-bold text-[#001f3f]"><Eye className="text-[#D4AF37]" /> Preview 15+ Template Sedia Guna</div>
-           </motion.div>
-           <div className="bg-gray-100 aspect-[4/3] rounded-3xl border-2 border-dashed border-[#001f3f]/10 flex items-center justify-center text-[#001f3f]/20 font-bold italic">
-             [ Romeo, Insert Product Preview Image Here ]
-           </div>
-        </div>
-      </section>
-
       {/* Pricing Section */}
       <section id="pricing" className="py-20 md:py-28">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -331,9 +279,6 @@ export default function CareerBoostLandingPage() {
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-[#001f3f]">
               Pilih Pakej Yang Sesuai
             </h2>
-            <p className="mt-4 text-gray-600 text-lg max-w-2xl mx-auto">
-              Pelaburan kecil untuk masa depan kerjaya yang lebih cerah
-            </p>
           </motion.div>
 
           <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
@@ -371,17 +316,12 @@ export default function CareerBoostLandingPage() {
                     <span className={`text-5xl md:text-6xl font-bold ${tier.popular ? "text-[#D4AF37]" : "text-[#001f3f]"}`}>
                       {tier.price}
                     </span>
-                    <span className={`text-sm ml-2 ${tier.popular ? "text-white/60" : "text-gray-500"}`}>
-                      sekali bayar
-                    </span>
                   </div>
 
                   <ul className="space-y-4 mb-8">
                     {tier.features.map((feature, featureIndex) => (
                       <li key={featureIndex} className="flex items-start gap-3">
-                        <div className={`w-5 h-5 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5 ${tier.popular ? "bg-[#D4AF37]/20" : "bg-[#D4AF37]/10"}`}>
-                          <Check className="w-3 h-3 text-[#D4AF37]" />
-                        </div>
+                        <Check className="w-4 h-4 text-[#D4AF37] mt-1" />
                         <span className={`text-sm ${tier.popular ? "text-white/90" : "text-gray-700"}`}>
                           {feature}
                         </span>
@@ -389,7 +329,7 @@ export default function CareerBoostLandingPage() {
                     ))}
                   </ul>
 
-                  <Button onClick={() => openCheckout(tier.name)} className={`w-full py-6 font-semibold rounded-xl ${tier.popular ? "bg-[#D4AF37] hover:bg-[#B8962E] text-[#001f3f]" : "bg-[#001f3f] text-white"}`}>
+                  <Button onClick={() => openCheckout(tier)} className={`w-full py-6 font-semibold rounded-xl ${tier.popular ? "bg-[#D4AF37] hover:bg-[#B8962E] text-[#001f3f]" : "bg-[#001f3f] text-white"}`}>
                     {tier.cta}
                   </Button>
                 </div>
@@ -399,97 +339,65 @@ export default function CareerBoostLandingPage() {
         </div>
       </section>
 
-      {/* Trust Section */}
-      <section className="py-16 md:py-20">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }} className="relative bg-[#001f3f] rounded-3xl p-8 md:p-12 overflow-hidden">
-            <div className="absolute top-0 right-0 w-64 h-64 bg-[#D4AF37]/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2" />
-            <div className="relative flex flex-col md:flex-row items-center gap-8 md:gap-12">
-              <div className="flex items-center justify-center gap-4">
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center"><Shield className="w-8 h-8 md:w-10 md:h-10 text-[#D4AF37]" /></div>
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center"><Users className="w-8 h-8 md:w-10 md:h-10 text-[#D4AF37]" /></div>
-                <div className="w-16 h-16 md:w-20 md:h-20 bg-[#D4AF37]/10 rounded-2xl flex items-center justify-center"><Award className="w-8 h-8 md:w-10 md:h-10 text-[#D4AF37]" /></div>
-              </div>
-              <div className="flex-1 text-center md:text-left">
-                <h3 className="text-2xl md:text-3xl font-bold text-white mb-3">Input dari Pengamal HR Malaysia</h3>
-                <p className="text-white/80 text-lg max-w-2xl">Kami memastikan modul ini relevan dengan kehendak industri masa kini. Dibina berdasarkan pengalaman dan feedback sebenar dari profesional HR di Malaysia.</p>
-              </div>
-            </div>
-          </motion.div>
+      {/* 7. CHECKOUT MODAL (BAYARCASH EMBED) */}
+<AnimatePresence>
+  {showCheckout && selectedPackage && (
+    <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
+      <motion.div 
+        initial={{ opacity: 0 }} 
+        animate={{ opacity: 1 }} 
+        exit={{ opacity: 0 }} 
+        onClick={() => setShowCheckout(false)} 
+        className="absolute inset-0 bg-[#001f3f]/90 backdrop-blur-md" 
+      />
+      <motion.div 
+        initial={{ scale: 0.95, opacity: 0, y: 20 }} 
+        animate={{ scale: 1, opacity: 1, y: 0 }} 
+        exit={{ scale: 0.95, opacity: 0, y: 20 }} 
+        // Tambah max-h-[90vh] supaya modal tak terkeluar skrin & overflow-y-auto untuk scroll
+        className="relative bg-white w-full max-w-lg rounded-[2rem] md:rounded-[2.5rem] p-6 md:p-10 shadow-2xl overflow-y-auto max-h-[90vh]"
+      >
+        <button onClick={() => setShowCheckout(false)} className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full z-20 bg-white shadow-sm">
+          <X className="w-6 h-6 text-[#001f3f]" />
+        </button>
+        
+        <div className="text-center mb-6">
+          <h4 className="text-2xl font-bold text-[#001f3f]">Checkout</h4>
+          <p className="text-sm text-gray-500">Pakej: <span className="font-bold text-[#D4AF37]">{selectedPackage.name}</span></p>
         </div>
-      </section>
 
-      {/* 7. CHECKOUT FORM */}
-      <AnimatePresence>
-        {showCheckout && (
-          <div className="fixed inset-0 z-[200] flex items-center justify-center p-4">
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              onClick={() => setShowCheckout(false)} 
-              className="absolute inset-0 bg-[#001f3f]/90 backdrop-blur-md" 
-            />
-            <motion.div 
-              initial={{ scale: 0.95, opacity: 0, y: 20 }} 
-              animate={{ scale: 1, opacity: 1, y: 0 }} 
-              exit={{ scale: 0.95, opacity: 0, y: 20 }} 
-              className="relative bg-white w-full max-w-lg rounded-[2.5rem] p-10 shadow-2xl"
-            >
-              <button onClick={() => setShowCheckout(false)} className="absolute top-6 right-6 p-2 hover:bg-gray-100 rounded-full"><X className="w-6 h-6 text-[#001f3f]" /></button>
-              <div className="text-center mb-8">
-                <div className="inline-flex items-center justify-center w-12 h-12 bg-[#D4AF37]/10 rounded-full mb-4"><Lock className="text-[#D4AF37] w-6 h-6" /></div>
-                <h4 className="text-3xl font-bold text-[#001f3f]">Lengkapkan Pembelian</h4>
-                <p className="text-gray-500 mt-2">Pakej: <span className="text-[#001f3f] font-bold">{selectedPackage}</span></p>
-              </div>
-              
-              <form className="space-y-6" onSubmit={handleCheckout}>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Nama Penuh</label>
-                  <input 
-                    name="name" 
-                    type="text" 
-                    required 
-                    className="w-full border-b-2 border-gray-100 py-3 focus:border-[#D4AF37] outline-none text-[#001f3f] font-medium text-lg bg-transparent" 
-                    placeholder="Romeo..." 
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-xs font-bold uppercase tracking-widest text-gray-400">Email Utama</label>
-                  <input 
-                    name="email" 
-                    type="email" 
-                    required 
-                    className="w-full border-b-2 border-gray-100 py-3 focus:border-[#D4AF37] outline-none text-[#001f3f] font-medium text-lg bg-transparent" 
-                    placeholder="romeo@email.com" 
-                  />
-                </div>
-                <Button 
-                  disabled={isSubmitting}
-                  className="w-full py-8 bg-[#001f3f] text-white text-xl font-bold rounded-2xl shadow-xl mt-6 hover:bg-[#002d5c] disabled:opacity-50"
-                >
-                  {isSubmitting ? "Sila Tunggu..." : "Bayar Sekarang"}
-                </Button>
-                <p className="text-center text-[10px] text-gray-400 flex items-center justify-center gap-2">
-                    <ShieldCheck className="w-3 h-3 text-green-500" /> Transaksi selamat melalui Billplz
-                </p>
-              </form>
-            </motion.div>
-          </div>
-        )}
-      </AnimatePresence>
-
-      {/* 8. FOOTER */}
-      <footer className="bg-[#001f3f] py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-            <span className="text-2xl font-bold text-white mb-8 block">CareerBoost<span className="text-[#D4AF37]">.my</span></span>
-            <div className="flex justify-center gap-4 mb-8">
-               <Facebook className="text-white hover:text-[#D4AF37] cursor-pointer" />
-               <Instagram className="text-white hover:text-[#D4AF37] cursor-pointer" />
-               <Mail className="text-white hover:text-[#D4AF37] cursor-pointer" />
+        {/* CONTAINER EMBED - Kita tambah overflow-hidden & min-height */}
+        <div className="w-full bg-gray-50 rounded-2xl overflow-hidden">
+          
+          {/* JIKA USER PILIH BASIC (RM23) */}
+          {selectedPackage.name === "Pakej Basic" && (
+            <div key="basic-form" className="w-full">
+              <div id="bcl-payment-form" data-url="https://syarekacreative.bcl.my/embed/form/careerboost-basic"></div>
+              <Script src="https://bcl.my/js/bc-encrypted-payment-embed.js" strategy="afterInteractive" />
             </div>
-            <p className="text-white/50 text-sm">© {new Date().getFullYear()} CareerBoost.my. All rights reserved.</p>
+          )}
+
+          {/* JIKA USER PILIH COMBO (RM33) */}
+          {selectedPackage.name === "Career Boost Bundle" && (
+            <div key="combo-form" className="w-full">
+              <div id="bcl-payment-form" data-url="https://syarekacreative.bcl.my/embed/form/careerboost"></div>
+              <Script src="https://bcl.my/js/bc-encrypted-payment-embed.js" strategy="afterInteractive" />
+            </div>
+          )}
+
         </div>
+
+        <p className="text-center text-[10px] text-gray-400 mt-6 flex items-center justify-center gap-2">
+          <ShieldCheck className="w-3 h-3 text-green-500" /> Secure checkout powered by BayarCash
+        </p>
+      </motion.div>
+    </div>
+  )}
+</AnimatePresence>
+
+      <footer className="bg-[#001f3f] py-12 text-center">
+        <span className="text-2xl font-bold text-white mb-4 block">CareerBoost<span className="text-[#D4AF37]">.my</span></span>
+        <p className="text-white/50 text-sm">© {new Date().getFullYear()} CareerBoost.my</p>
       </footer>
     </main>
   )

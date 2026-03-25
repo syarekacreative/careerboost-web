@@ -1,44 +1,25 @@
-import { NextResponse } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-
-// Paksa file ni jangan buat static build untuk elak error build Vercel
-export const dynamic = 'force-dynamic';
+// app/api/webhook/route.ts
+import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    // Initialize Supabase kat dalam function
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
-
     const data = await req.json();
-    console.log('BayarCash Webhook:', data);
 
-    // Ambil email & status dari BayarCash
-    const email = data.email || data.customer_email;
-    const isPaid = data.status === 'paid' || data.paid === true;
+    // 1. Check status payment dari BayarCash
+    // Biasanya status 'paid' atau ikut documentation bcl.my
+    if (data.status === "paid") {
+      const userEmail = data.email;
+      const packageName = data.collection_name; // Atau ikut field bcl bagi
 
-    if (isPaid && email) {
-      // Update status dalam Supabase supaya user boleh login/akses ebook
-      const { error: dbError } = await supabase
-        .from('orders')
-        .upsert({ 
-          email: email, 
-          status: 'paid', 
-          is_paid: true,
-          updated_at: new Date().toISOString()
-        }, { onConflict: 'email' });
-
-      if (dbError) throw new Error(`Database Error: ${dbError.message}`);
-
-      return NextResponse.json({ message: 'Supabase updated' }, { status: 200 });
+      // 2. LOGIK KAU DI SINI:
+      // - Hantar email guna Resend/Nodemailer berserta link E-book.
+      // - Atau update database Supabase kau.
+      
+      console.log(`Payment success for ${userEmail} package ${packageName}`);
     }
 
-    return NextResponse.json({ message: 'Payment pending or no email' }, { status: 200 });
-
-  } catch (err: any) {
-    console.error('Webhook Error:', err.message);
-    return NextResponse.json({ error: err.message }, { status: 500 });
+    return NextResponse.json({ received: true }, { status: 200 });
+  } catch (err) {
+    return NextResponse.json({ error: "Webhook failed" }, { status: 400 });
   }
 }
