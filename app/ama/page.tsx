@@ -1,80 +1,76 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { motion, AnimatePresence } from "framer-motion"
+import { motion } from "framer-motion"
 import { 
   Send, 
-  ArrowLeft, 
   UserX,
   Sparkles,
   MessageSquareText,
   Clock,
-  Zap,
-  ArrowRight
+  Zap
 } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { toast, Toaster } from "sonner"
 import Link from "next/link"
-
-// --- DUMMY DATA ---
-const answeredQuestions = [
-  {
-    id: 1,
-    question: "Bang, kalau resume saya ada gap setahun sebab jaga mak sakit, HR pandang rendah tak?",
-    answer: "HR tak pandang rendah kalau kau jujur. Tulis 'Career Break - Caregiving'. Yang penting tunjuk kau tak 'stagnant' masa tu.",
-    date: "2 jam lepas"
-  },
-  {
-    id: 2,
-    question: "Expectation gaji 3k untuk fresh grad kat KL ni melampau ke?",
-    answer: "Tak melampau kalau portfolio kau solid. 3k tu standard baru untuk survive kat KL sekarang.",
-    date: "5 jam lepas"
-  },
-  {
-    id: 3,
-    question: "Perlu ke letak gambar dalam resume tahun 2026 ni?",
-    answer: "Tak perlu. Kebanyakan ATS lebih suka resume tanpa gambar untuk elak bias. Fokus pada content.",
-    date: "1 hari lepas"
-  },
-  {
-    id: 4,
-    question: "Macam mana nak jawab 'Why should we hire you' tanpa nampak desperate?",
-    answer: "Fokus pada problem dorang, bukan keperluan kau. Cerita macam mana skill kau boleh selesaikan pain points syarikat tu.",
-    date: "2 hari lepas"
-  }
-]
+import { supabase } from "@/lib/supabase" // Pastikan path ni betul ikut setup kau
+import { formatDistanceToNow } from "date-fns"
 
 export default function AMAPage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [question, setQuestion] = useState("")
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [answeredQuestions, setAnsweredQuestions] = useState<any[]>([])
+
+  // 1. Fetch data real-time dari Supabase
+  const fetchQuestions = async () => {
+    const { data, error } = await supabase
+      .from('ama_questions')
+      .select('*')
+      .not('answer', 'is', null) // Hanya tunjuk yang dah ada jawapan
+      .order('created_at', { ascending: false })
+
+    if (error) {
+      console.error("Error fetching data:", error)
+    } else {
+      setAnsweredQuestions(data || [])
+    }
+  }
 
   useEffect(() => {
+    fetchQuestions()
+
     const handleScroll = () => setIsScrolled(window.scrollY > 40)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
+  // 2. Submit soalan ke Supabase
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!question.trim()) return
     setIsSubmitting(true)
-    
-    // Simulating submission
-    setTimeout(() => {
+
+    const { error } = await supabase
+      .from('ama_questions')
+      .insert([{ question: question.trim() }])
+
+    if (!error) {
       toast.success("Soalan anon kau dah dihantar!", {
         style: { background: '#D4AF37', color: '#001f3f', fontWeight: '900' }
       })
       setQuestion("")
-      setIsSubmitting(false)
-    }, 1200)
+    } else {
+      toast.error("Gagal hantar soalan. Cuba lagi.")
+    }
+    setIsSubmitting(false)
   }
 
   return (
     <main className="min-h-screen bg-[#001f3f] font-sans text-white selection:bg-[#D4AF37]/30 pb-20">
       <Toaster position="top-center" richColors />
 
-      {/* --- STICKY TOP TRIGGER BAR (Same as Landing) --- */}
+      {/* --- STICKY TOP TRIGGER BAR --- */}
       <div className="fixed top-0 left-0 right-0 z-[60] bg-[#D4AF37] py-2 px-4 shadow-md overflow-hidden">
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-4">
           <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-[#001f3f] animate-pulse flex-shrink-0" />
@@ -87,7 +83,7 @@ export default function AMAPage() {
         </div>
       </div>
 
-      {/* --- NAVIGATION (Same as Landing) --- */}
+      {/* --- NAVIGATION --- */}
       <header
         className={`fixed left-0 right-0 z-50 transition-all duration-300 ${
           isScrolled 
@@ -99,7 +95,6 @@ export default function AMAPage() {
           <Link href="/" className="text-xl sm:text-2xl text-white tracking-tight">
             CareerBoost<span className="text-[#D4AF37]">.my</span>
           </Link>
-          
           <Button asChild className="bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#001f3f] px-4 sm:px-6 rounded-full text-xs sm:text-sm shadow-lg font-black">
              <Link href="/#pricing">Dapatkan Sekarang</Link>
           </Button>
@@ -156,7 +151,7 @@ export default function AMAPage() {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {answeredQuestions.map((item) => (
+          {answeredQuestions.map((item, index) => (
             <motion.div 
               key={item.id}
               initial={{ opacity: 0, scale: 0.95 }}
@@ -164,9 +159,8 @@ export default function AMAPage() {
               viewport={{ once: true }}
               className="group relative bg-white rounded-[2.5rem] p-8 shadow-[0_20px_50px_rgba(0,0,0,0.3)] flex flex-col justify-between hover:translate-y-[-8px] transition-all duration-300"
             >
-              {/* Numbering */}
               <div className="absolute -top-3 -right-3 w-12 h-12 bg-[#D4AF37] text-[#001f3f] rounded-2xl flex items-center justify-center font-black text-xl shadow-lg rotate-12 group-hover:rotate-0 transition-transform">
-                #{String(item.id).padStart(2, '0')}
+                #{String(answeredQuestions.length - index).padStart(2, '0')}
               </div>
 
               <div>
@@ -189,13 +183,19 @@ export default function AMAPage() {
 
               <div className="mt-8 flex items-center justify-between pt-4 border-t border-slate-100">
                 <span className="text-[9px] font-black text-slate-300 uppercase tracking-widest italic">
-                  {item.date}
+                  {formatDistanceToNow(new Date(item.created_at), { addSuffix: true })}
                 </span>
                 <div className="w-2 h-2 rounded-full bg-[#D4AF37] animate-pulse" />
               </div>
             </motion.div>
           ))}
         </div>
+
+        {answeredQuestions.length === 0 && !isSubmitting && (
+           <div className="text-center py-20 text-white/20 font-black uppercase tracking-widest">
+              Belum ada soalan dijawab. Be the first!
+           </div>
+        )}
       </section>
 
       <footer className="mt-32 text-center py-10 opacity-30 border-t border-white/5">
