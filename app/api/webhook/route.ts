@@ -2,7 +2,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize Supabase (Guna service_role key supaya tak sangkut RLS)
+// Initialize Supabase Client (Guna Service Role Key untuk bypass RLS)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -12,42 +12,38 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
 
-    // Log untuk monitor kat Vercel Logs
-    console.log("Terima Webhook dari BCL:", data);
+    // Console log ni penting untuk kau check kat Vercel Logs nanti
+    console.log("Data Webhook BCL Masuk:", data);
 
-    // Filter hanya untuk payment yang BERJAYA
+    // Filter payment yang statusnya 'paid'
     if (data.status === "paid" || data.payment_status === "paid") {
-      const userEmail = data.email;
-      const amount = data.amount;
-      const packageName = data.collection_name;
-      const customerName = data.first_name || "Pembeli";
-      const paymentId = data.id; // ID unik dari bcl.my
-
-      // SIMPAN KE SUPABASE
+      
+      // Ambil data dari BCL untuk simpan ke table 'orders'
       const { error } = await supabase
-        .from('orders') // Pastikan table 'orders' dah wujud kat Supabase
+        .from('orders') 
         .insert([
           {
-            email: userEmail,
-            customer_name: customerName,
-            package_name: packageName,
-            amount: parseFloat(amount),
+            email: data.email,
+            customer_name: data.first_name || "Pembeli Career Boost",
+            package_name: data.collection_name, // Contoh: "Career Boost Bundle"
+            amount: parseFloat(data.amount),
             status: 'paid',
-            payment_id: paymentId,
+            payment_id: data.id, // ID unik transaksi dari BCL
           }
         ]);
 
       if (error) {
-        console.error("❌ Gagal simpan ke Supabase:", error.message);
+        console.error("❌ Supabase Error:", error.message);
       } else {
-        console.log(`✅ Rekod jualan disimpan: ${userEmail} (RM${amount})`);
+        console.log(`✅ Jualan Berjaya Direkod: ${data.email}`);
       }
     }
 
+    // Bagitahu BCL yang kita dah terima data (Status 200)
     return NextResponse.json({ received: true }, { status: 200 });
 
   } catch (err) {
-    console.error("❌ Webhook Error:", err);
-    return NextResponse.json({ error: "Invalid JSON or Server Error" }, { status: 400 });
+    console.error("❌ Webhook Crash:", err);
+    return NextResponse.json({ error: "Server Error" }, { status: 500 });
   }
 }
