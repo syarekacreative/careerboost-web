@@ -5,21 +5,27 @@ export async function POST(req: Request) {
   try {
     const data = await req.json();
 
-    // 1. Check status payment dari BayarCash
-    // Biasanya status 'paid' atau ikut documentation bcl.my
-    if (data.status === "paid") {
-      const userEmail = data.email;
-      const packageName = data.collection_name; // Atau ikut field bcl bagi
+    // 1. Log data untuk kau monitor kat Vercel Dashboard
+    console.log("Terima Webhook dari BCL:", data);
 
-      // 2. LOGIK KAU DI SINI:
-      // - Hantar email guna Resend/Nodemailer berserta link E-book.
-      // - Atau update database Supabase kau.
+    // 2. Filter hanya untuk payment yang BERJAYA (status === 'paid')
+    if (data.status === "paid" || data.payment_status === "paid") {
+      const userEmail = data.email;
+      const amount = data.amount;
+      const packageName = data.collection_name;
+
+      // Kat sini kau boleh buat side-task lain kalau nak, contoh:
+      // - Simpan dalam Supabase Database untuk rekod jualan
+      // - Update total sales kat dashboard kau
       
-      console.log(`Payment success for ${userEmail} package ${packageName}`);
+      console.log(`✅ Payment Berjaya: ${userEmail} beli ${packageName} (RM${amount})`);
     }
 
+    // WAJIB: Bagi respon 200 kat BCL supaya dia tahu webhook dah selamat sampai
     return NextResponse.json({ received: true }, { status: 200 });
+
   } catch (err) {
-    return NextResponse.json({ error: "Webhook failed" }, { status: 400 });
+    console.error("❌ Webhook Error:", err);
+    return NextResponse.json({ error: "Invalid JSON or Server Error" }, { status: 400 });
   }
 }
