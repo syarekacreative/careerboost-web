@@ -2,7 +2,6 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@supabase/supabase-js";
 
-// Initialize Supabase Client (Guna Service Role Key untuk bypass RLS)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
   process.env.SUPABASE_SERVICE_ROLE_KEY!
@@ -10,36 +9,37 @@ const supabase = createClient(
 
 export async function POST(req: Request) {
   try {
-    const data = await req.json();
+    const payload = await req.json();
+    console.log("BCL Webhook Received:", JSON.stringify(payload, null, 2));
 
-    // Console log ni penting untuk kau check kat Vercel Logs nanti
-    console.log("Data Webhook BCL Masuk:", data);
+    // Ikut logs kau: maklumat ada dalam payload.data.main_data
+    const mainData = payload.data?.main_data;
 
-    // Filter payment yang statusnya 'paid'
-    if (data.status === "paid" || data.payment_status === "paid") {
+    // Check status bayaran guna 'is_paid' (1 bermaksud sudah bayar)
+    if (mainData && mainData.is_paid === 1) {
       
-      // Ambil data dari BCL untuk simpan ke table 'orders'
       const { error } = await supabase
-        .from('orders') 
+        .from('orders')
         .insert([
           {
-            email: data.email,
-            customer_name: data.first_name || "Pembeli Career Boost",
-            package_name: data.collection_name, // Contoh: "Career Boost Bundle"
-            amount: parseFloat(data.amount),
+            email: mainData.payer_email,
+            customer_name: mainData.payer_name || "Buyer",
+            package_name: payload.data.form_title || "Career Boost Product",
+            amount: parseFloat(mainData.amount),
             status: 'paid',
-            payment_id: data.id, // ID unik transaksi dari BCL
+            payment_id: mainData.id, // '01kmjhqd84db5kjv1dq39pajwf'
           }
         ]);
 
       if (error) {
         console.error("❌ Supabase Error:", error.message);
       } else {
-        console.log(`✅ Jualan Berjaya Direkod: ${data.email}`);
+        console.log(`✅ Jualan Berjaya Direkod untuk: ${mainData.payer_email}`);
       }
+    } else {
+      console.log("⚠️ Webhook diterima tapi is_paid bukan 1 atau data tak lengkap.");
     }
 
-    // Bagitahu BCL yang kita dah terima data (Status 200)
     return NextResponse.json({ received: true }, { status: 200 });
 
   } catch (err) {
