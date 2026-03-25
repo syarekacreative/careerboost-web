@@ -10,40 +10,44 @@ const supabase = createClient(
 export async function POST(req: Request) {
   try {
     const payload = await req.json();
-    console.log("BCL Webhook Received:", JSON.stringify(payload, null, 2));
+    
+    // DEBUG: Supaya kau nampak kat log kalau dia masuk sampai sini
+    console.log("Processing Webhook for event:", payload.event);
 
-    // Ikut logs kau: maklumat ada dalam payload.data.main_data
-    const mainData = payload.data?.main_data;
+    // Ikut log kau: data utama duduk dalam payload.data.main_data
+    const bclData = payload.data;
+    const mainData = bclData?.main_data;
 
-    // Check status bayaran guna 'is_paid' (1 bermaksud sudah bayar)
+    // Check is_paid === 1 (berdasarkan log kau)
     if (mainData && mainData.is_paid === 1) {
-      
+      console.log("Payment verified (is_paid: 1). Inserting to Supabase...");
+
       const { error } = await supabase
         .from('orders')
         .insert([
           {
             email: mainData.payer_email,
             customer_name: mainData.payer_name || "Buyer",
-            package_name: payload.data.form_title || "Career Boost Product",
+            package_name: bclData.form_title || "Career Boost Product",
             amount: parseFloat(mainData.amount),
             status: 'paid',
-            payment_id: mainData.id, // '01kmjhqd84db5kjv1dq39pajwf'
+            payment_id: mainData.id,
           }
         ]);
 
       if (error) {
-        console.error("❌ Supabase Error:", error.message);
+        console.error("❌ Supabase Error Detail:", error.message);
       } else {
-        console.log(`✅ Jualan Berjaya Direkod untuk: ${mainData.payer_email}`);
+        console.log(`✅ BERJAYA! Data ${mainData.payer_email} dah masuk Supabase.`);
       }
     } else {
-      console.log("⚠️ Webhook diterima tapi is_paid bukan 1 atau data tak lengkap.");
+      console.log("⚠️ Payment skipped: is_paid bukan 1 atau data tak cukup.");
     }
 
     return NextResponse.json({ received: true }, { status: 200 });
 
   } catch (err) {
     console.error("❌ Webhook Crash:", err);
-    return NextResponse.json({ error: "Server Error" }, { status: 500 });
+    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
   }
 }
