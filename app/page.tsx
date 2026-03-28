@@ -639,7 +639,7 @@ export default function CareerBoostLandingPage() {
             <div className="w-full max-w-xs h-px bg-white/10 mb-6" />
 
             <p className="text-white/50 text-sm">
-              © {new Date().getFullYear()} CareerBoost.my. All rights reserved.
+              © {new Date().getFullYear()} CareerBoost.my. All rights reserved. (MA0284447-K)
             </p>
           </motion.div>
         </div>
