@@ -632,9 +632,7 @@ export default function CareerBoostLandingPage() {
               </a>
             </div>
 
-            <p className="text-white/60 text-sm mb-6 max-w-md">
-              Digital download link will be sent to your email immediately after payment.
-            </p>
+            
 
             <div className="w-full max-w-xs h-px bg-white/10 mb-6" />
 
