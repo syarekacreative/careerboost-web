@@ -16,33 +16,6 @@ import Link from "next/link"
 import { supabase } from "@/lib/supabase" // Pastikan path ni betul ikut setup kau
 import { formatDistanceToNow } from "date-fns"
 
-export const metadata = {
-  title: 'Ask Me Anything - Career Engine | CareerBoost.my',
-  description: 'Tanya soalan career kau secara anonymous. Aku jawab terus dalam bentuk tiles untuk semua orang belajar.',
-  openGraph: {
-    title: 'Ask Me Anything - Career Engine',
-    description: 'Tanya soalan rahsia kau kat sini tanpa segan. 100% anonymous.',
-    url: 'https://careerboost.my/ama', // Ganti dengan URL betul kau
-    siteName: 'CareerBoost.my',
-    images: [
-      {
-        url: '/og-ama.png', // Pastikan file ni ada dalam folder /public
-        width: 1200,
-        height: 630,
-        alt: 'Ask Me Anything CareerBoost',
-      },
-    ],
-    locale: 'ms_MY',
-    type: 'website',
-  },
-  twitter: {
-    card: 'summary_large_image',
-    title: 'Ask Me Anything - Career Engine',
-    description: 'Tanya soalan career secara anon & dapatkan jawapan padu.',
-    images: ['/og-ama.png'],
-  },
-}
-
 export default function AMAPage() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [question, setQuestion] = useState("")
