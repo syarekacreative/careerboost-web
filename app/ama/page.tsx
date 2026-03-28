@@ -102,9 +102,9 @@ export default function AMAPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-center gap-2 sm:gap-4">
           <Clock className="w-3 h-3 sm:w-4 sm:h-4 text-[#001f3f] animate-pulse flex-shrink-0" />
           <p className="text-[9px] sm:text-xs font-black text-[#001f3f] uppercase tracking-tight sm:tracking-widest">
-            OFFER BETA: RM33 UNTUK 20 SLOT SAHAJA (TINGGAL 7 SLOT LAGI!)
+            OFFER: RM23 UNTUK 20 SLOT SAHAJA
           </p>
-          <Link href="/#pricing" className="text-[8px] sm:text-[10px] font-black text-white bg-[#001f3f] px-2 sm:px-4 py-1 rounded-full hover:scale-105 transition-all">
+          <Link href="https://careerboost.bcl.my/form/resumeats" className="text-[8px] sm:text-[10px] font-black text-white bg-[#001f3f] px-2 sm:px-4 py-1 rounded-full hover:scale-105 transition-all">
             GRAB NOW
           </Link>
         </div>
@@ -123,7 +123,7 @@ export default function AMAPage() {
             CareerBoost<span className="text-[#D4AF37]">.my</span>
           </Link>
           <Button asChild className="bg-[#D4AF37] hover:bg-[#D4AF37]/90 text-[#001f3f] px-4 sm:px-6 rounded-full text-xs sm:text-sm shadow-lg font-black">
-             <Link href="/#pricing">Dapatkan Sekarang</Link>
+             <Link href="https://careerboost.bcl.my/form/resumeats">Dapatkan Sekarang</Link>
           </Button>
         </div>
       </header>
